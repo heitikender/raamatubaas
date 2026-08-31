@@ -39,14 +39,19 @@ LANG = {
 # ---------- HTTP ----------
 def http_get(url, timeout=90):
     req = urllib.request.Request(url, headers={'User-Agent': 'raamatubaas-erb-harvester/1.0'})
-    for attempt in range(4):
+    last = None
+    for attempt in range(8):
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return r.read()
-        except (urllib.error.URLError, TimeoutError) as e:
-            if attempt == 3:
+        except Exception as e:
+            # OAI server drops connections often (RemoteDisconnected,
+            # ConnectionReset, URLError, timeouts) — retry all transient
+            # network errors with backoff instead of crashing the whole run.
+            last = e
+            if attempt == 7:
                 raise
-            time.sleep(3 * (attempt + 1))
+            time.sleep(min(30, 3 * (attempt + 1)))
 
 def sb(method, path, body=None, prefer=None):
     h = {'apikey': KEY, 'Authorization': f'Bearer {KEY}', 'Content-Type': 'application/json'}
