@@ -252,8 +252,8 @@ def get_source_id(name):
     if r:
         return r[0]['id']
     r = sb('POST', '/rest/v1/sources',
-           {'name': name, 'kind': 'bibliograafia', 'base_url': 'https://erb.nlib.ee',
-            'api_notes': 'OAI-PMH data.digar.ee/repox/OAIHandler set=raamat, MARC21XML, CC0'},
+           {'name': name, 'kind': 'bibliograafia', 'base_url': 'https://www.ester.ee/search~S95',
+            'api_notes': 'OAI-PMH data.digar.ee/repox/OAIHandler set=raamat, MARC21XML, CC0; kirjeviited ESTER ~S95 (rahvusbibliograafia)'},
            prefer='return=representation')
     return r[0]['id']
 
@@ -317,8 +317,14 @@ def flush(rows, src_id):
     for r in new_rows:
         bid = id_by_erb.get(r['erb_id'])
         if bid:
+            # erb.nlib.ee on suletud → ESTERi rahvusbibliograafia otsing (~S95)
+            isbn = ''.join(c for c in (r.get('isbn') or '') if c.isdigit() or c in 'Xx')
+            if isbn:
+                url = f"https://www.ester.ee/search~S95?/i{isbn}"
+            else:
+                url = "https://www.ester.ee/search~S95?/X" + urllib.parse.quote(r.get('title') or '')
             bs.append({'book_id': bid, 'source_id': src_id,
-                       'url': f"https://erb.nlib.ee/?otsi={r['erb_id']}",
+                       'url': url,
                        'raw': {'erb_id': r['erb_id'], 'isbn': r.get('isbn')}})
     if bs:
         try:

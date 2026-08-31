@@ -12,6 +12,20 @@ const IMG_LABELS: [keyof Book, string][] = [
   ['title_page_url', 'Tiitelleht']
 ];
 
+// erb.nlib.ee on kinni pandud; suuname ERB-kirjed ESTERi rahvus-
+// bibliograafia otsingusse (~S95) ISBN või pealkirja järgi.
+function esterErbUrl(book: Book): string {
+  const isbn = (book.isbn ?? '').replace(/[^0-9Xx]/g, '');
+  if (isbn) return `https://www.ester.ee/search~S95?/i${isbn}`;
+  const t = (book.title ?? '').trim();
+  if (t) return `https://www.ester.ee/search~S95?/X${encodeURIComponent(t)}`;
+  return 'https://www.ester.ee/search~S95';
+}
+function fixSourceUrl(url: string | null, book: Book): string | null {
+  if (url && url.includes('erb.nlib.ee')) return esterErbUrl(book);
+  return url;
+}
+
 export default async function BookPage({ params }: { params: { id: string } }) {
   const sb = serverClient();
   const { data: book } = await sb
@@ -95,14 +109,17 @@ export default async function BookPage({ params }: { params: { id: string } }) {
             <>
               <h2>Allikad</h2>
               <ul>
-                {((sources ?? []) as BookSource[]).map(s => (
-                  <li key={s.id}>
-                    {s.url
-                      ? <a href={s.url} target="_blank" rel="noreferrer">{s.sources?.name ?? s.url}</a>
-                      : (s.sources?.name ?? '—')}
-                    <span className="muted small"> · {new Date(s.fetched_at).toLocaleDateString('et-EE')}</span>
-                  </li>
-                ))}
+                {((sources ?? []) as BookSource[]).map(s => {
+                  const href = fixSourceUrl(s.url, book);
+                  return (
+                    <li key={s.id}>
+                      {href
+                        ? <a href={href} target="_blank" rel="noreferrer">{s.sources?.name ?? href}</a>
+                        : (s.sources?.name ?? '—')}
+                      <span className="muted small"> · {new Date(s.fetched_at).toLocaleDateString('et-EE')}</span>
+                    </li>
+                  );
+                })}
               </ul>
             </>
           )}
