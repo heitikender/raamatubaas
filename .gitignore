@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.vercel/
+*.log
+scripts/.erb_token
+scripts/seed_data.json
+scripts/covers/
+# keskkonnamuutujad (anon-võti on avalik, aga hoiame .env failid repost väljas)
+.env
+.env.local
+.env.production
+.env*.local

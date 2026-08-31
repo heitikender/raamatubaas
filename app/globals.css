@@ -1,0 +1,90 @@
+:root {
+  --paper:#f5f1e6; --card:#fdfbf4; --ink:#211f1a; --muted:#756d5e;
+  --red:#bf2f26; --blue:#2f5da8; --line:#d8d1bf; --band:#efe9d8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:#1c1b17; --card:#26241e; --ink:#e9e3d3; --muted:#a39a86;
+    --red:#e0584c; --blue:#7ea3dc; --line:#3a372e; --band:#2c2a23;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; }
+body {
+  background: var(--paper); color: var(--ink);
+  font-family: "PT Serif", Georgia, serif;
+  font-size: 16px; line-height: 1.55;
+}
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.wrap { max-width: 1140px; margin: 0 auto; padding: 0 20px 70px; }
+
+/* Päis */
+.masthead { border-top: 6px solid var(--red); border-bottom: 3px double var(--blue); padding: 18px 0 14px; margin-bottom: 26px; }
+.masthead-inner { max-width: 1140px; margin: 0 auto; padding: 0 20px; display:flex; align-items: baseline; gap: 22px; flex-wrap: wrap; }
+.logo { font-family: "PT Sans Narrow", Arial, sans-serif; font-weight: 700; font-size: 30px; letter-spacing: .02em; color: var(--ink); }
+.logo:hover { text-decoration: none; }
+.nav { display: flex; gap: 16px; font-family: "PT Sans Narrow", Arial, sans-serif; text-transform: uppercase; letter-spacing: .1em; font-size: 13px; }
+
+h1 { font-family: "PT Sans Narrow", Arial, sans-serif; font-weight: 700; font-size: clamp(28px, 4.5vw, 44px); line-height: 1.05; margin: 0 0 12px; }
+h2 { font-family: "PT Sans Narrow", Arial, sans-serif; font-weight: 700; font-size: 24px; margin: 34px 0 10px; text-transform: uppercase; letter-spacing: .05em; }
+.muted { color: var(--muted); }
+.small { font-size: 13.5px; }
+
+/* Otsing/filtrid */
+.toolbar { display:flex; gap:10px; flex-wrap:wrap; margin: 14px 0 22px; }
+.toolbar input, .toolbar select {
+  font: inherit; padding: 8px 12px; border: 1px solid var(--line);
+  background: var(--card); color: var(--ink); min-width: 200px;
+}
+.btn {
+  display:inline-block; font-family:"PT Sans Narrow",Arial,sans-serif; text-transform:uppercase; letter-spacing:.08em;
+  font-size:14px; padding:9px 16px; border:1px solid var(--ink); background:var(--ink); color:var(--paper);
+  cursor:pointer;
+}
+.btn:hover { text-decoration:none; opacity:.85; }
+.btn.secondary { background:transparent; color:var(--ink); }
+.btn.danger { background:var(--red); border-color:var(--red); color:#fff; }
+
+/* Raamatute võrk */
+.grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 20px; }
+.bookcard { background: var(--card); border: 1px solid var(--line); padding: 12px; display:flex; flex-direction:column; gap:8px; }
+.bookcard:hover { text-decoration:none; outline: 2px solid var(--blue); }
+.bookcard .coverbox { aspect-ratio: 2/3; background: var(--band); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.bookcard img { width:100%; height:100%; object-fit: cover; }
+.bookcard .nocover { color: var(--muted); font-size: 12px; text-align:center; padding: 8px; font-family:"PT Sans Narrow",Arial,sans-serif; }
+.bookcard .t { font-weight:700; font-size:15px; line-height:1.25; color:var(--ink); }
+.bookcard .a { font-size:13px; color:var(--muted); }
+.bookcard .y { font-family:"PT Sans Narrow",Arial,sans-serif; color:var(--blue); font-weight:700; }
+
+/* Detailvaade */
+.detail { display:grid; grid-template-columns: 300px 1fr; gap: 34px; align-items:start; }
+@media (max-width: 720px) { .detail { grid-template-columns: 1fr; } }
+.imgcol { display:flex; flex-direction:column; gap: 12px; }
+.imgcol figure { margin:0; }
+.imgcol img { width:100%; border:1px solid var(--line); box-shadow: 3px 4px 0 rgba(0,0,0,.12); }
+.imgcol figcaption { font-family:"PT Sans Narrow",Arial,sans-serif; text-transform:uppercase; letter-spacing:.09em; font-size:12px; color:var(--muted); margin-top:4px; }
+.meta { border:1px solid var(--line); background:var(--card); }
+.meta div { display:flex; border-bottom:1px solid var(--line); }
+.meta div:last-child { border-bottom:none; }
+.meta dt { flex: 0 0 180px; padding:8px 12px; background:var(--band); font-family:"PT Sans Narrow",Arial,sans-serif; text-transform:uppercase; letter-spacing:.07em; font-size:12.5px; color:var(--muted); }
+.meta dd { margin:0; padding:8px 12px; }
+
+/* Tabelid */
+.tablewrap { overflow-x:auto; border:1px solid var(--line); background:var(--card); }
+table { border-collapse: collapse; width:100%; }
+th { font-family:"PT Sans Narrow",Arial,sans-serif; text-transform:uppercase; letter-spacing:.09em; font-size:12px; text-align:left; color:var(--muted); background:var(--band); padding:9px 12px; border-bottom:2px solid var(--line); }
+td { padding:9px 12px; border-bottom:1px solid var(--line); vertical-align: middle; }
+tr:last-child td { border-bottom:none; }
+
+/* Vormid */
+.form { display:grid; gap:14px; max-width: 760px; }
+.form label { display:block; font-family:"PT Sans Narrow",Arial,sans-serif; text-transform:uppercase; letter-spacing:.07em; font-size:12.5px; color:var(--muted); margin-bottom:4px; }
+.form input, .form textarea, .form select {
+  width:100%; font:inherit; padding:8px 10px; border:1px solid var(--line); background:var(--card); color:var(--ink);
+}
+.form textarea { min-height: 110px; }
+.form .row2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:600px){ .form .row2 { grid-template-columns:1fr; } }
+.notice { border-left:4px solid var(--blue); background:var(--card); padding:10px 14px; margin:14px 0; }
+.notice.err { border-color: var(--red); }
