@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { serverClient } from '@/lib/supabase';
 import BookCard from '@/components/BookCard';
+import SeriesSearch from '@/components/SeriesSearch';
 import type { Book } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -54,10 +55,13 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
     error = res.error;
   }
 
-  const [{ data: seriesList }, { count }] = await Promise.all([
-    sb.from('series_with_counts').select('id,name').gt('book_count', 0).order('name').limit(2000),
+  const [seriesRes, { count }] = await Promise.all([
+    sari
+      ? sb.from('series').select('name').eq('id', sari).maybeSingle()
+      : Promise.resolve({ data: null }),
     sb.from('books').select('*', { count: 'exact', head: true })
   ]);
+  const currentSeriesName = (seriesRes.data as { name?: string } | null)?.name ?? '';
 
   const pages = Math.ceil(total / PER);
 
@@ -73,8 +77,6 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
     if (n > 1) p.set('lk', String(n));
     return `/?${p.toString()}`;
   };
-  const seriesName = (id: string) => (seriesList ?? []).find(s => s.id === id)?.name;
-
   return (
     <>
       <h1>Eesti keeles ilmunud raamatud</h1>
@@ -84,12 +86,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
 
       <form className="toolbar" method="get">
         <input type="search" name="q" placeholder="Otsi pealkirja või autorit…" defaultValue={q} />
-        <select name="sari" defaultValue={sari}>
-          <option value="">— kõik sarjad —</option>
-          {(seriesList ?? []).map(s => (
-            <option key={s.id} value={s.id}>{s.name}</option>
-          ))}
-        </select>
+        <SeriesSearch initialId={sari} initialLabel={currentSeriesName} />
         <input name="aasta" placeholder="Aasta, nt 1970-1991" defaultValue={aasta} />
         <button className="btn" type="submit">Otsi</button>
       </form>
@@ -125,7 +122,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
                       <span className="rl-auth">{(b.authors ?? []).join(', ')}</span>
                     </td>
                     <td className="rl-year">{b.pub_year ?? ''}</td>
-                    <td className="rl-series">{b.series?.name ?? (b.series_id ? seriesName(b.series_id) : '')}</td>
+                    <td className="rl-series">{b.series?.name ?? ''}</td>
                   </tr>
                 ))}
               </tbody>
