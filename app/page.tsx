@@ -36,7 +36,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       .order('title', { ascending: true })
       .range((lk - 1) * PER, lk * PER - 1);
 
-    if (q) query = query.or(`title.ilike.%${q}%,authors.cs.{${q}}`);
+    if (q) query = query.or(`title.ilike.%${q}%,authors_text.ilike.%${q}%`);
     if (sari) query = query.eq('series_id', sari);
     if (kirjastus) query = query.eq('publisher', kirjastus);
     if (zanr) query = query.eq('genre', zanr);

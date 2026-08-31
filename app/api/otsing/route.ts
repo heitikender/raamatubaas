@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
     query = query.or(`isbn.eq.${isbn},isbn.eq.${isbnRaw}`);
   } else {
     query = query
-      .or(`title.ilike.%${q}%,authors.cs.{${q}}`)
+      .or(`title.ilike.%${q}%,authors_text.ilike.%${q}%`)
       .order('pub_year', { ascending: false });
   }
 
