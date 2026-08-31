@@ -88,3 +88,24 @@ tr:last-child td { border-bottom:none; }
 @media (max-width:600px){ .form .row2 { grid-template-columns:1fr; } }
 .notice { border-left:4px solid var(--blue); background:var(--card); padding:10px 14px; margin:14px 0; }
 .notice.err { border-color: var(--red); }
+
+/* Kompaktne otsingunimekiri */
+table.rlist { border-collapse: collapse; width: 100%; }
+table.rlist td { padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.rlist tr:hover { background: var(--band); }
+.rl-cover { width: 42px; }
+.rl-cover img { width: 36px; height: 50px; object-fit: cover; border: 1px solid var(--line); display: block; }
+.rl-nocover { color: var(--muted); }
+.rl-main { min-width: 240px; }
+.rl-title { font-weight: 700; display: block; line-height: 1.2; }
+.rl-auth { font-size: 13px; color: var(--muted); }
+.rl-year { font-family: "PT Sans Narrow", Arial, sans-serif; font-weight: 700; color: var(--blue); width: 60px; font-variant-numeric: tabular-nums; }
+.rl-series { font-size: 13px; color: var(--muted); max-width: 260px; }
+
+/* Filtrikiibid */
+.chips { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 8px; }
+.chip { background: var(--band); border: 1px solid var(--line); padding: 4px 10px; font-size: 14px; }
+.chip a { margin-left: 6px; color: var(--red); font-weight: 700; text-decoration: none; }
+
+/* Pagineerimine */
+.pager { display: flex; gap: 16px; align-items: center; margin: 20px 0; }

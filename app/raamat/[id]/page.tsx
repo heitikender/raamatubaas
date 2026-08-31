@@ -56,7 +56,12 @@ export default async function BookPage({ params }: { params: { id: string } }) {
             <div><dt>Autor(id)</dt><dd>{book.authors.join(', ') || '—'}</dd></div>
             <div><dt>Originaalkeel</dt><dd>{book.orig_language ?? '—'}</dd></div>
             <div><dt>Raamatu keel</dt><dd>{book.language}</dd></div>
-            <div><dt>Kirjastus</dt><dd>{book.publisher ?? '—'}</dd></div>
+            <div>
+              <dt>Kirjastus</dt>
+              <dd>{book.publisher
+                ? <Link href={`/?kirjastus=${encodeURIComponent(book.publisher)}`}>{book.publisher}</Link>
+                : '—'}</dd>
+            </div>
             <div><dt>Tiraaž</dt><dd>{book.print_run ? book.print_run.toLocaleString('et-EE') : '—'}</dd></div>
             <div><dt>Originaali aasta</dt><dd>{book.orig_year ?? '—'}</dd></div>
             <div><dt>Väljaande aasta</dt><dd>{book.pub_year ?? '—'}</dd></div>
@@ -70,7 +75,12 @@ export default async function BookPage({ params }: { params: { id: string } }) {
                 </dd>
               </div>
             )}
-            {book.genre && <div><dt>Žanr</dt><dd>{book.genre}</dd></div>}
+            {book.genre && (
+              <div>
+                <dt>Žanr</dt>
+                <dd><Link href={`/?zanr=${encodeURIComponent(book.genre)}`}>{book.genre}</Link></dd>
+              </div>
+            )}
           </dl>
 
           {book.description && (

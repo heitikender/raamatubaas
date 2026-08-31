@@ -1,37 +1,79 @@
+import Link from 'next/link';
 import { serverClient } from '@/lib/supabase';
 import BookCard from '@/components/BookCard';
 import type { Book } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-type Search = { q?: string; sari?: string; aasta?: string };
+const PER = 100;
+
+type Search = {
+  q?: string; sari?: string; aasta?: string;
+  kirjastus?: string; zanr?: string; lk?: string;
+};
 
 export default async function Home({ searchParams }: { searchParams: Search }) {
   const sb = serverClient();
   const q = (searchParams.q ?? '').trim();
   const sari = (searchParams.sari ?? '').trim();
   const aasta = (searchParams.aasta ?? '').trim();
+  const kirjastus = (searchParams.kirjastus ?? '').trim();
+  const zanr = (searchParams.zanr ?? '').trim();
+  const lk = Math.max(1, parseInt(searchParams.lk ?? '1', 10) || 1);
 
-  let query = sb
-    .from('books')
-    .select('*, series(*)')
-    .order('pub_year', { ascending: true })
-    .order('title', { ascending: true })
-    .limit(500);
+  const hasFilter = Boolean(q || sari || aasta || kirjastus || zanr);
 
-  if (q) query = query.or(`title.ilike.%${q}%,authors.cs.{${q}}`);
-  if (sari) query = query.eq('series_id', sari);
-  if (aasta) {
-    const [a, b] = aasta.split('-');
-    if (a) query = query.gte('pub_year', Number(a));
-    query = query.lte('pub_year', Number(b || a));
+  let books: Book[] = [];
+  let total = 0;
+  let error: { message: string } | null = null;
+
+  if (hasFilter) {
+    let query = sb
+      .from('books')
+      .select('*, series(id,name)', { count: 'exact' })
+      .order('pub_year', { ascending: true })
+      .order('title', { ascending: true })
+      .range((lk - 1) * PER, lk * PER - 1);
+
+    if (q) query = query.or(`title.ilike.%${q}%,authors.cs.{${q}}`);
+    if (sari) query = query.eq('series_id', sari);
+    if (kirjastus) query = query.eq('publisher', kirjastus);
+    if (zanr) query = query.eq('genre', zanr);
+    if (aasta) {
+      const [a, b] = aasta.split('-');
+      if (a) query = query.gte('pub_year', Number(a));
+      query = query.lte('pub_year', Number(b || a));
+    }
+    const res = await query;
+    books = (res.data ?? []) as Book[];
+    total = res.count ?? 0;
+    error = res.error;
+  } else {
+    const res = await sb.rpc('random_books', { lim: 10 });
+    books = (res.data ?? []) as Book[];
+    error = res.error;
   }
 
-  const [{ data: books, error }, { data: seriesList }, { count }] = await Promise.all([
-    query,
-    sb.from('series').select('*').order('name'),
+  const [{ data: seriesList }, { count }] = await Promise.all([
+    sb.from('series').select('id,name').order('name'),
     sb.from('books').select('*', { count: 'exact', head: true })
   ]);
+
+  const pages = Math.ceil(total / PER);
+
+  // aktiivsete filtrite kirjeldus + URL järgmise lehe jaoks
+  const baseParams = new URLSearchParams();
+  if (q) baseParams.set('q', q);
+  if (sari) baseParams.set('sari', sari);
+  if (aasta) baseParams.set('aasta', aasta);
+  if (kirjastus) baseParams.set('kirjastus', kirjastus);
+  if (zanr) baseParams.set('zanr', zanr);
+  const pageUrl = (n: number) => {
+    const p = new URLSearchParams(baseParams);
+    if (n > 1) p.set('lk', String(n));
+    return `/?${p.toString()}`;
+  };
+  const seriesName = (id: string) => (seriesList ?? []).find(s => s.id === id)?.name;
 
   return (
     <>
@@ -48,18 +90,68 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </select>
-        <input name="aasta" placeholder="Aasta või vahemik, nt 1970-1991" defaultValue={aasta} />
+        <input name="aasta" placeholder="Aasta, nt 1970-1991" defaultValue={aasta} />
         <button className="btn" type="submit">Otsi</button>
       </form>
 
+      {(kirjastus || zanr) && (
+        <p className="chips">
+          {kirjastus && <span className="chip">Kirjastus: <b>{kirjastus}</b> <Link href="/">✕</Link></span>}
+          {zanr && <span className="chip">Žanr: <b>{zanr}</b> <Link href="/">✕</Link></span>}
+        </p>
+      )}
+
       {error && <p className="notice err">Viga andmebaasist lugemisel: {error.message}</p>}
 
-      <div className="grid">
-        {((books ?? []) as Book[]).map(b => <BookCard key={b.id} book={b} />)}
-      </div>
+      {hasFilter ? (
+        <>
+          <h2>Otsingutulemused</h2>
+          <p className="muted small">
+            {total.toLocaleString('et-EE')} vastet{pages > 1 ? ` · lehekülg ${lk}/${pages}` : ''}
+          </p>
+          <div className="tablewrap">
+            <table className="rlist">
+              <tbody>
+                {books.map(b => (
+                  <tr key={b.id}>
+                    <td className="rl-cover">
+                      {b.cover_front_url
+                        // eslint-disable-next-line @next/next/no-img-element
+                        ? <img src={b.cover_front_url} alt="" loading="lazy" />
+                        : <span className="rl-nocover">—</span>}
+                    </td>
+                    <td className="rl-main">
+                      <Link href={`/raamat/${b.id}`} className="rl-title">{b.title}</Link>
+                      <span className="rl-auth">{(b.authors ?? []).join(', ')}</span>
+                    </td>
+                    <td className="rl-year">{b.pub_year ?? ''}</td>
+                    <td className="rl-series">{b.series?.name ?? (b.series_id ? seriesName(b.series_id) : '')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-      {(books ?? []).length === 0 && !error && (
-        <p className="muted">Ühtegi raamatut ei leitud. Kui baas on alles tühi, käivita seemendusskript (vt README).</p>
+          {pages > 1 && (
+            <nav className="pager">
+              {lk > 1 && <Link className="btn secondary" href={pageUrl(lk - 1)}>← Eelmine</Link>}
+              <span className="muted small">lehekülg {lk} / {pages}</span>
+              {lk < pages && <Link className="btn secondary" href={pageUrl(lk + 1)}>Järgmine →</Link>}
+            </nav>
+          )}
+
+          {books.length === 0 && !error && (
+            <p className="muted">Ühtegi raamatut ei leitud. Proovi teist otsingut.</p>
+          )}
+        </>
+      ) : (
+        <>
+          <h2>Juhuvalik</h2>
+          <p className="muted small">Kümme juhuslikku raamatut andmebaasist — värskenda lehte uute jaoks.</p>
+          <div className="grid">
+            {books.map(b => <BookCard key={b.id} book={b} />)}
+          </div>
+        </>
       )}
     </>
   );
