@@ -274,19 +274,21 @@ def flush(rows, src_id):
             id_by_erb[g['erb_id']] = g['id']
             existing_ids.add(g['erb_id'])
 
-    # täienda olemasolevatel žanr (kui puudu) — grupeeri žanri kaupa, et päringuid vähe oleks
-    by_genre = {}
-    for r in rows:
-        if r['erb_id'] in existing_ids and r.get('genre'):
-            by_genre.setdefault(r['genre'], []).append(r['erb_id'])
-    for g, ids in by_genre.items():
-        for i in range(0, len(ids), 150):
-            lst = ','.join(ids[i:i + 150])
-            try:
-                sb('PATCH', f'/rest/v1/books?erb_id=in.({lst})&genre=is.null',
-                   {'genre': g})
-            except RuntimeError:
-                pass
+    # täienda olemasolevatel žanr (kui puudu) — ainult kui GENRE_BACKFILL=1
+    # (muidu jäetakse vahele, et import jõuaks kiiresti puuduvate kirjeteni)
+    if os.environ.get('GENRE_BACKFILL') == '1':
+        by_genre = {}
+        for r in rows:
+            if r['erb_id'] in existing_ids and r.get('genre'):
+                by_genre.setdefault(r['genre'], []).append(r['erb_id'])
+        for g, ids in by_genre.items():
+            for i in range(0, len(ids), 150):
+                lst = ','.join(ids[i:i + 150])
+                try:
+                    sb('PATCH', f'/rest/v1/books?erb_id=in.({lst})&genre=is.null',
+                       {'genre': g})
+                except RuntimeError:
+                    pass
 
     new_rows = [r for r in rows if r['erb_id'] not in id_by_erb]
     if new_rows:

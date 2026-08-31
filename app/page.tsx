@@ -55,7 +55,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
   }
 
   const [{ data: seriesList }, { count }] = await Promise.all([
-    sb.from('series').select('id,name').order('name'),
+    sb.from('series_with_counts').select('id,name').gt('book_count', 0).order('name').limit(2000),
     sb.from('books').select('*', { count: 'exact', head: true })
   ]);
 
