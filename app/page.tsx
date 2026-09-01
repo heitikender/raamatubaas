@@ -36,7 +36,12 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       .order('title', { ascending: true })
       .range((lk - 1) * PER, lk * PER - 1);
 
-    if (q) query = query.or(`title.ilike.%${q}%,authors_text.ilike.%${q}%`);
+    if (q) {
+      const parts = [`title.ilike.%${q}%`, `authors_text.ilike.%${q}%`];
+      const isbnClean = q.replace(/[^0-9Xx]/g, '');
+      if (isbnClean.length >= 5) parts.push(`isbn.ilike.%${isbnClean}%`);
+      query = query.or(parts.join(','));
+    }
     if (sari) query = query.eq('series_id', sari);
     if (kirjastus) query = query.eq('publisher', kirjastus);
     if (zanr) query = query.eq('genre', zanr);
@@ -85,7 +90,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       </p>
 
       <form className="toolbar" method="get">
-        <input type="search" name="q" placeholder="Otsi pealkirja või autorit…" defaultValue={q} />
+        <input type="search" name="q" placeholder="Otsi pealkirja, autorit või ISBN-i…" defaultValue={q} />
         <SeriesSearch initialId={sari} initialLabel={currentSeriesName} />
         <input name="aasta" placeholder="Aasta, nt 1970-1991" defaultValue={aasta} />
         <button className="btn" type="submit">Otsi</button>

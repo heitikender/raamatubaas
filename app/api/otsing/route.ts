@@ -71,9 +71,10 @@ export async function GET(req: NextRequest) {
     // ISBN salvestatakse mõnikord sidekriipsudega — võrdle ka toorkujul
     query = query.or(`isbn.eq.${isbn},isbn.eq.${isbnRaw}`);
   } else {
-    query = query
-      .or(`title.ilike.%${q}%,authors_text.ilike.%${q}%`)
-      .order('pub_year', { ascending: false });
+    const parts = [`title.ilike.%${q}%`, `authors_text.ilike.%${q}%`];
+    const isbnClean = q.replace(/[^0-9Xx]/g, '');
+    if (isbnClean.length >= 5) parts.push(`isbn.ilike.%${isbnClean}%`);
+    query = query.or(parts.join(',')).order('pub_year', { ascending: false });
   }
 
   query = query.range((lk - 1) * limit, lk * limit - 1);
