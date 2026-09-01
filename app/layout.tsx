@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import VisitLogger from '@/components/VisitLogger';
+import { serverClient } from '@/lib/supabase';
+import { VERSION } from '@/lib/version';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -8,7 +9,18 @@ export const metadata: Metadata = {
   description: 'Eesti keeles ilmunud raamatute superandmebaas — originaalid ja tõlked, kaanepiltide ja allikaviidetega.'
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Päringute arv viimasel 7 päeval (logitakse otsingul, tabelisse visits).
+  let queriesWeek = 0;
+  try {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+    const { count } = await serverClient()
+      .from('visits')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', weekAgo);
+    queriesWeek = count ?? 0;
+  } catch { /* loendur pole kriitiline */ }
+
   return (
     <html lang="et">
       <head>
@@ -28,7 +40,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
         <main className="wrap">{children}</main>
-        <VisitLogger />
+        <footer className="sitefoot">
+          Päringuid viimasel nädalal: {queriesWeek.toLocaleString('et-EE')} · versioon {VERSION}
+        </footer>
       </body>
     </html>
   );

@@ -136,6 +136,14 @@ table.rlist tr:hover { background: var(--band); }
 /* Konto sektsioonid */
 section { margin: 26px 0; }
 
+/* Lehe jalus */
+.sitefoot {
+  max-width: 1140px; margin: 40px auto 0; padding: 16px 20px 30px;
+  border-top: 1px solid var(--line); color: var(--muted);
+  font-family: "PT Sans Narrow", Arial, sans-serif; font-size: 13px;
+  letter-spacing: .04em; text-align: center;
+}
+
 /* Sarjaotsing (typeahead) */
 .ss { position: relative; display: inline-block; }
 .ss > input[type="text"] {

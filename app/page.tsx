@@ -3,7 +3,6 @@ import { serverClient } from '@/lib/supabase';
 import BookCard from '@/components/BookCard';
 import SeriesSearch from '@/components/SeriesSearch';
 import GenreSearch from '@/components/GenreSearch';
-import { VERSION } from '@/lib/version';
 import type { Book } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -56,6 +55,15 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
     books = (res.data ?? []) as Book[];
     total = res.count ?? 0;
     error = res.error;
+    // Logi otsingupäring (loendame päringuid). Ainult 1. lehel, et
+    // lehekülgede vahetamine ei loeks uue päringuna.
+    if (lk === 1) {
+      const desc = [
+        q && `q:${q}`, sari && `sari:${sari}`, zanr && `zanr:${zanr}`,
+        kirjastus && `kirjastus:${kirjastus}`, aasta && `aasta:${aasta}`
+      ].filter(Boolean).join(' ').slice(0, 200);
+      try { await sb.from('visits').insert({ path: desc || 'otsing' }); } catch { /* loendur pole kriitiline */ }
+    }
   } else {
     const res = await sb
       .from('books')
@@ -67,18 +75,15 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
     error = res.error;
   }
 
-  const weekAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
-  const [seriesRes, { count }, visitsRes] = await Promise.all([
+  const [seriesRes, { count }] = await Promise.all([
     sari
       ? sb.from('series').select('name').eq('id', sari).maybeSingle()
       : Promise.resolve({ data: null }),
     // 'estimated' (planeerija statistika) — 'exact' count(*) 229k+ real võib
     // suure kirjutuskoormuse all timeout'ida (500). Loendurile piisab hinnangust.
-    sb.from('books').select('*', { count: 'estimated', head: true }),
-    sb.from('visits').select('*', { count: 'exact', head: true }).gte('created_at', weekAgo)
+    sb.from('books').select('*', { count: 'estimated', head: true })
   ]);
   const currentSeriesName = (seriesRes.data as { name?: string } | null)?.name ?? '';
-  const visitsWeek = visitsRes.count ?? 0;
 
   const pages = Math.ceil(total / PER);
 
@@ -99,9 +104,6 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       <h1>Eesti keeles ilmunud raamatud</h1>
       <p className="muted">
         Andmebaasis on {(count ?? 0).toLocaleString('et-EE')} raamatut — originaalid ja tõlked, kaanepiltide, tiraažide ja allikaviidetega.
-      </p>
-      <p className="muted small">
-        Külastusi viimasel nädalal: {visitsWeek.toLocaleString('et-EE')} · versioon {VERSION}
       </p>
 
       <form className="toolbar" method="get">
