@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { serverClient } from '@/lib/supabase';
 import BookCard from '@/components/BookCard';
 import SeriesSearch from '@/components/SeriesSearch';
+import GenreSearch from '@/components/GenreSearch';
+import { VERSION } from '@/lib/version';
 import type { Book } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -65,13 +67,16 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
     error = res.error;
   }
 
-  const [seriesRes, { count }] = await Promise.all([
+  const weekAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+  const [seriesRes, { count }, visitsRes] = await Promise.all([
     sari
       ? sb.from('series').select('name').eq('id', sari).maybeSingle()
       : Promise.resolve({ data: null }),
-    sb.from('books').select('*', { count: 'exact', head: true })
+    sb.from('books').select('*', { count: 'exact', head: true }),
+    sb.from('visits').select('*', { count: 'exact', head: true }).gte('created_at', weekAgo)
   ]);
   const currentSeriesName = (seriesRes.data as { name?: string } | null)?.name ?? '';
+  const visitsWeek = visitsRes.count ?? 0;
 
   const pages = Math.ceil(total / PER);
 
@@ -93,18 +98,21 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       <p className="muted">
         Andmebaasis on {(count ?? 0).toLocaleString('et-EE')} raamatut — originaalid ja tõlked, kaanepiltide, tiraažide ja allikaviidetega.
       </p>
+      <p className="muted small">
+        Külastusi viimasel nädalal: {visitsWeek.toLocaleString('et-EE')} · versioon {VERSION}
+      </p>
 
       <form className="toolbar" method="get">
         <input type="search" name="q" placeholder="Otsi pealkirja, autorit või ISBN-i…" defaultValue={q} />
         <SeriesSearch initialId={sari} initialLabel={currentSeriesName} />
+        <GenreSearch initialValue={zanr} />
         <input name="aasta" placeholder="Aasta, nt 1970-1991" defaultValue={aasta} />
         <button className="btn" type="submit">Otsi</button>
       </form>
 
-      {(kirjastus || zanr) && (
+      {kirjastus && (
         <p className="chips">
-          {kirjastus && <span className="chip">Kirjastus: <b>{kirjastus}</b> <Link href="/">✕</Link></span>}
-          {zanr && <span className="chip">Žanr: <b>{zanr}</b> <Link href="/">✕</Link></span>}
+          <span className="chip">Kirjastus: <b>{kirjastus}</b> <Link href="/">✕</Link></span>
         </p>
       )}
 
