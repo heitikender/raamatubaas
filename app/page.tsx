@@ -55,7 +55,12 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
     total = res.count ?? 0;
     error = res.error;
   } else {
-    const res = await sb.rpc('random_books', { lim: 10 });
+    const res = await sb
+      .from('books')
+      .select('*, series(id,name)')
+      .not('cover_front_url', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(10);
     books = (res.data ?? []) as Book[];
     error = res.error;
   }
@@ -148,8 +153,8 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </>
       ) : (
         <>
-          <h2>Juhuvalik</h2>
-          <p className="muted small">Kümme juhuslikku raamatut andmebaasist — värskenda lehte uute jaoks.</p>
+          <h2>Viimati uuendatud</h2>
+          <p className="muted small">Kümme viimati täiendatud raamatut, millel on kaanepilt olemas.</p>
           <div className="grid">
             {books.map(b => <BookCard key={b.id} book={b} />)}
           </div>
