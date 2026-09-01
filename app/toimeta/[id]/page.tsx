@@ -49,6 +49,7 @@ function BookForm() {
     delete (payload as Record<string, unknown>).series;
     delete (payload as Record<string, unknown>).created_at;
     delete (payload as Record<string, unknown>).updated_at;
+    delete (payload as Record<string, unknown>).authors_text; // genereeritud veerg — ei tohi kirjutada
 
     if (!payload.title?.trim()) { setErr('Pealkiri on kohustuslik.'); setSaving(false); return; }
 
