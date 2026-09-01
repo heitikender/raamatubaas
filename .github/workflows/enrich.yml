@@ -1,0 +1,39 @@
+name: Rikastus (kaaned + kirjeldused)
+
+# Jookseb pidevalt GitHubi infras — ei sõltu ühestki Claude-sessioonist ega
+# laptopist. Iga käivitus töötleb ühe partii kaaneta/kirjelduseta raamatuid
+# (Raamatukoi), märgib need enriched_at-veeruga, nii et midagi ei proovita
+# kaks korda. Kui kõik on läbi, ei tee tühijooksud enam midagi.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # iga 15 minuti järel
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Mitu raamatut selles käivituses'
+        default: '1000'
+
+concurrency:
+  group: rikastus
+  cancel-in-progress: false   # ära käivita paralleelselt; uus ootab
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Rikasta partii
+        env:
+          SUPABASE_URL: https://xddppjgfxpqidafrhzfj.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY salajane muutuja puudub — lisa see repo Settings → Secrets → Actions alla."
+            exit 1
+          fi
+          python3 scripts/harvest_enrich.py --mark --limit "${{ github.event.inputs.limit || '1000' }}"
