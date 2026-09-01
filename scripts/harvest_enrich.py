@@ -223,10 +223,14 @@ def main():
     args = sys.argv[1:]
     all_mode = '--all' in args
     covers_only = '--covers-only' in args
+    # --mark: kasuta enriched_at-märgist edenemiseks (GitHub Actions jaoks) —
+    # iga töödeldud raamat märgitakse, midagi ei proovita kaks korda.
+    mark = '--mark' in args
     limit = 10**9 if all_mode else 500
     if '--limit' in args:
         limit = int(args[args.index('--limit') + 1])
-    resume = '--resume' in args
+    resume = '--resume' in args and not mark
+    now_iso = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
 
     src_ids = {}
     for s in (sb('GET', '/rest/v1/sources?select=id,name') or []):
@@ -236,8 +240,10 @@ def main():
     if resume and os.path.exists(CURSOR_FILE):
         last_id = open(CURSOR_FILE).read().strip() or last_id
 
-    # tingimus: kaaneta VÕI kirjelduseta
+    # tingimus: kaaneta VÕI kirjelduseta (mark-režiimis lisaks veel märkimata)
     cond = 'cover_front_url=is.null' if covers_only else 'or=(cover_front_url.is.null,description.is.null)'
+    if mark:
+        cond = 'enriched_at=is.null&' + cond
     processed = filled_cover = filled_desc = 0
     PAGE = 100
     while processed < limit:
@@ -252,13 +258,18 @@ def main():
             processed += 1
             last_id = b['id']
             patch, via = enrich_one(b)
+            found = bool(patch)
+            if mark:                       # märgi ka siis, kui midagi ei leitud
+                patch = dict(patch or {})
+                patch['enriched_at'] = now_iso
             if patch:
                 sb('PATCH', f"/rest/v1/books?id=eq.{b['id']}", patch)
+            if found:
                 if 'cover_front_url' in patch:
                     filled_cover += 1
                 if 'description' in patch:
                     filled_desc += 1
-                if src_ids.get(via):
+                if via and src_ids.get(via):
                     try:
                         sb('POST', '/rest/v1/book_sources',
                            {'book_id': b['id'], 'source_id': src_ids[via],
@@ -266,14 +277,15 @@ def main():
                             'raw': {'via': via, 'fields': list(patch.keys())}})
                     except Exception:
                         pass
-                tag = '+'.join(k.split('_')[0] for k in patch)
+                tag = '+'.join(k.split('_')[0] for k in patch if k != 'enriched_at')
                 print(f'[{processed}] {via} ({tag}): {b["title"][:48]}', flush=True)
             else:
                 print(f'[{processed}] -     {b["title"][:48]}', flush=True)
-            if processed % 20 == 0:
+            if not mark and processed % 20 == 0:
                 open(CURSOR_FILE, 'w').write(last_id)
             time.sleep(0.15)
-        open(CURSOR_FILE, 'w').write(last_id)
+        if not mark:
+            open(CURSOR_FILE, 'w').write(last_id)
 
     print(f'Valmis. Toodeldud {processed}, kaas +{filled_cover}, kirjeldus +{filled_desc}.')
 
