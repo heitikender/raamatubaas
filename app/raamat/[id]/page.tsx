@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { serverClient } from '@/lib/supabase';
+import BookActions from '@/components/BookActions';
 import type { Book, BookSource } from '@/lib/types';
 
 export const revalidate = 60;
@@ -44,9 +45,20 @@ export default async function BookPage({ params }: { params: { id: string } }) {
 
   return (
     <>
-      <h1>{book.title}</h1>
-      {book.subtitle && <p className="muted">{book.subtitle}</p>}
-      <p className="muted">{book.authors.join(', ')}</p>
+      <div className="detail-head">
+        <div>
+          <h1>{book.title}</h1>
+          {book.subtitle && <p className="muted">{book.subtitle}</p>}
+          <p className="muted">{book.authors.join(', ')}</p>
+        </div>
+        <BookActions book={{
+          id: book.id,
+          cover_front_url: book.cover_front_url ?? null,
+          cover_spine_url: book.cover_spine_url ?? null,
+          cover_back_url: book.cover_back_url ?? null,
+          title_page_url: book.title_page_url ?? null
+        }} />
+      </div>
 
       <div className="detail">
         <div className="imgcol">

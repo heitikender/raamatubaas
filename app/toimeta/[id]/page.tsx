@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import AuthGate from '@/components/AuthGate';
+import ImageUpload from '@/components/ImageUpload';
 import { browserClient } from '@/lib/supabase';
 import type { Book, Series } from '@/lib/types';
 
@@ -11,10 +12,10 @@ const EMPTY: Partial<Book> = {
 };
 
 const IMG_FIELDS = [
-  ['cover_front_url', 'esikaas', 'front'],
-  ['cover_spine_url', 'selg', 'spine'],
-  ['cover_back_url', 'tagakaas', 'back'],
-  ['title_page_url', 'tiitelleht', 'title']
+  ['cover_front_url', 'Esikaas'],
+  ['cover_spine_url', 'Selg'],
+  ['cover_back_url', 'Tagakaas'],
+  ['title_page_url', 'Tiitelleht']
 ] as const;
 
 function BookForm() {
@@ -60,20 +61,6 @@ function BookForm() {
       if (error) setErr(error.message); else setMsg('Salvestatud.');
     }
     setSaving(false);
-  }
-
-  async function uploadImage(field: (typeof IMG_FIELDS)[number][0], slot: string, file: File) {
-    if (isNew) { setErr('Salvesta raamat enne piltide lisamist.'); return; }
-    setErr(null);
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const path = `${params.id}/${slot}.${ext}`;
-    const { error } = await sb.storage.from('covers').upload(path, file, { upsert: true });
-    if (error) { setErr(`Pildi üleslaadimine ebaõnnestus: ${error.message}`); return; }
-    const { data } = sb.storage.from('covers').getPublicUrl(path);
-    const url = `${data.publicUrl}?v=${Date.now()}`;
-    set(field, url);
-    await sb.from('books').update({ [field]: url }).eq('id', params.id);
-    setMsg('Pilt üles laaditud.');
   }
 
   async function remove() {
@@ -173,19 +160,16 @@ function BookForm() {
       <h2>Pildid</h2>
       {isNew && <p className="muted small">Salvesta raamat kõigepealt, siis saab pilte lisada.</p>}
       {!isNew && (
-        <div className="row2">
-          {IMG_FIELDS.map(([field, label, slot]) => (
-            <div key={field}>
-              <label>{label}</label>
-              {book[field] && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={book[field] as string} alt={label} style={{ width: 120, display: 'block', marginBottom: 6, border: '1px solid var(--line)' }} />
-              )}
-              <input type="file" accept="image/*"
-                     onChange={e => { const f = e.target.files?.[0]; if (f) uploadImage(field, slot, f); }} />
-            </div>
-          ))}
-        </div>
+        <>
+          <p className="muted small">Max 1 MB; suurus vähendatakse automaatselt alla 1000×1000 ja 100 KB.</p>
+          <div className="imgup-grid">
+            {IMG_FIELDS.map(([field, label]) => (
+              <ImageUpload key={field} bookId={params.id} field={field} label={label}
+                           currentUrl={(book[field] as string) ?? null}
+                           onDone={url => set(field, url)} />
+            ))}
+          </div>
+        </>
       )}
 
       <div style={{ display: 'flex', gap: 10 }}>

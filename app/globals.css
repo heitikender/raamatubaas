@@ -110,6 +110,32 @@ table.rlist tr:hover { background: var(--band); }
 /* Pagineerimine */
 .pager { display: flex; gap: 16px; align-items: center; margin: 20px 0; }
 
+/* Raamatu tegevused ("...") */
+.detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.ba { position: relative; flex: 0 0 auto; }
+.ba-dots { font-size: 22px; line-height: 1; padding: 2px 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; border-radius: 4px; }
+.ba-dots:hover { background: var(--band); }
+.ba-menu { position: absolute; right: 0; top: 100%; margin-top: 4px; background: var(--card); border: 1px solid var(--line); box-shadow: 2px 4px 0 rgba(0,0,0,.12); z-index: 20; min-width: 180px; }
+.ba-item { display: block; width: 100%; text-align: left; padding: 9px 14px; border: none; background: none; font: inherit; color: var(--ink); cursor: pointer; border-bottom: 1px solid var(--line); }
+.ba-item:last-child { border-bottom: none; }
+.ba-item:hover { background: var(--band); text-decoration: none; }
+.ba-hint { margin-top: 8px; }
+.ba-userup { margin: 18px 0; padding: 16px; border: 1px solid var(--line); background: var(--card); }
+.ba-userup h3 { font-family: "PT Sans Narrow", Arial, sans-serif; text-transform: uppercase; letter-spacing: .05em; font-size: 16px; margin: 0 0 6px; }
+.linklike { border: none; background: none; color: var(--blue); font: inherit; cursor: pointer; padding: 0; text-decoration: underline; }
+
+/* Pildi-upload */
+.imgup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; margin-top: 10px; }
+.imgup { border: 1px solid var(--line); background: var(--band); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.imgup-label { font-family: "PT Sans Narrow", Arial, sans-serif; text-transform: uppercase; letter-spacing: .07em; font-size: 12px; color: var(--muted); }
+.imgup-thumb { width: 100%; max-height: 180px; object-fit: contain; border: 1px solid var(--line); background: var(--card); }
+.imgup-empty { aspect-ratio: 2/3; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; background: var(--card); border: 1px dashed var(--line); }
+.imgup-btn { text-align: center; cursor: pointer; }
+.imgup-err { color: var(--red); font-size: 12.5px; }
+
+/* Konto sektsioonid */
+section { margin: 26px 0; }
+
 /* Sarjaotsing (typeahead) */
 .ss { position: relative; display: inline-block; }
 .ss > input[type="text"] {

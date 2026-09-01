@@ -22,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/sari">Sarjad</Link>
               <Link href="/allikad">Allikad</Link>
               <Link href="/toimeta">Toimeta</Link>
+              <Link href="/konto">Konto</Link>
             </nav>
           </div>
         </header>
