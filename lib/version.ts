@@ -4,6 +4,7 @@
 //  Z (väike) — iga pisiparandus
 //
 // Ajalugu:
+//  1.1.1 — raamatute koguarv hinnangulise loendusega (vältib timeout'i suure koormuse all)
 //  1.1.0 — žanri-filter ülaribal, külastuste loendur, versiooninumber
 //  1.0.x — rollid, piltide upload, rikastus-API, ISBN-otsing jm
-export const VERSION = '1.1.0';
+export const VERSION = '1.1.1';

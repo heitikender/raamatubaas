@@ -72,7 +72,9 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
     sari
       ? sb.from('series').select('name').eq('id', sari).maybeSingle()
       : Promise.resolve({ data: null }),
-    sb.from('books').select('*', { count: 'exact', head: true }),
+    // 'estimated' (planeerija statistika) — 'exact' count(*) 229k+ real võib
+    // suure kirjutuskoormuse all timeout'ida (500). Loendurile piisab hinnangust.
+    sb.from('books').select('*', { count: 'estimated', head: true }),
     sb.from('visits').select('*', { count: 'exact', head: true }).gte('created_at', weekAgo)
   ]);
   const currentSeriesName = (seriesRes.data as { name?: string } | null)?.name ?? '';
