@@ -19,6 +19,8 @@ Kasutus:
 """
 import json, os, sys, re, time, html, unicodedata
 import urllib.request, urllib.parse, urllib.error
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from genre_rules import classify_genre
 
 URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
 KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
@@ -248,7 +250,7 @@ def main():
     PAGE = 100
     while processed < limit:
         rows = sb('GET', '/rest/v1/books'
-                  f'?select=id,title,pub_year,authors,cover_front_url,description&{cond}'
+                  f'?select=id,title,pub_year,authors,cover_front_url,description,genre&{cond}'
                   f'&id=gt.{last_id}&order=id.asc&limit={PAGE}')
         if not rows:
             break
@@ -259,6 +261,12 @@ def main():
             last_id = b['id']
             patch, via = enrich_one(b)
             found = bool(patch)
+            # žanr sisututvustuse põhjal (ulme / kriminaalromaan)
+            desc_eff = (patch or {}).get('description') or b.get('description')
+            g = classify_genre(desc_eff)
+            if g and g != (b.get('genre') or ''):
+                patch = dict(patch or {})
+                patch['genre'] = g
             if mark:                       # märgi ka siis, kui midagi ei leitud
                 patch = dict(patch or {})
                 patch['enriched_at'] = now_iso
