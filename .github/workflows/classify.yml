@@ -1,0 +1,38 @@
+name: Žanri-agent (ulme / kriminaalromaan)
+
+# Loeb olemasolevad sisututvustused ja klassifitseerib žanri (ulme /
+# kriminaalromaan). Klassifikaator on kohalik (võrgupäringuid pole), seega
+# üks käivitus jõuab suure partii läbi. Märgib genre_checked_at'ga.
+
+on:
+  schedule:
+    - cron: '25 * * * *'   # kord tunnis
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Mitu raamatut'
+        default: '5000'
+
+concurrency:
+  group: zanr
+  cancel-in-progress: false
+
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Klassifitseeri žanrid
+        env:
+          SUPABASE_URL: https://xddppjgfxpqidafrhzfj.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY puudub — lisa see repo Settings → Secrets → Actions alla."
+            exit 1
+          fi
+          python3 scripts/classify_genre.py --limit "${{ github.event.inputs.limit || '5000' }}"
