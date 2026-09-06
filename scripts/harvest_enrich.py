@@ -263,7 +263,7 @@ def main():
             found = bool(patch)
             # žanr sisututvustuse põhjal (ulme / kriminaalromaan)
             desc_eff = (patch or {}).get('description') or b.get('description')
-            g = classify_genre(desc_eff)
+            g = classify_genre(desc_eff, b.get('genre'))
             if g and g != (b.get('genre') or ''):
                 patch = dict(patch or {})
                 patch['genre'] = g

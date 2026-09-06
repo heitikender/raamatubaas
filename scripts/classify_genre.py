@@ -67,7 +67,7 @@ def main():
                 break
             processed += 1
             last_id = b['id']
-            g = classify_genre(b.get('description'))
+            g = classify_genre(b.get('description'), b.get('genre'))
             patch = {'genre_checked_at': now_iso}
             if g and g != (b.get('genre') or ''):
                 patch['genre'] = g
