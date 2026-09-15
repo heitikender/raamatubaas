@@ -1,4 +1,5 @@
 import { serverClient } from '@/lib/supabase';
+import AddSource from '@/components/AddSource';
 
 export const revalidate = 300;
 
@@ -27,6 +28,7 @@ export default async function SourcesPage() {
           </tbody>
         </table>
       </div>
+      <AddSource />
     </>
   );
 }
