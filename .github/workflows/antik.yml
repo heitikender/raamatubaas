@@ -1,0 +1,39 @@
+name: Sarjade sidumine (antikvariaat)
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Mitu sarja selles käivituses'
+        default: '500'
+  schedule:
+    - cron: '17 */3 * * *'
+
+concurrency:
+  group: antik
+  cancel-in-progress: false
+
+jobs:
+  link:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Seo sarjad baasiga
+        env:
+          SUPABASE_URL: https://xddppjgfxpqidafrhzfj.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python3 scripts/antik_series.py --all --limit "${{ github.event.inputs.limit || '500' }}"
+      - name: Salvesta edenemine (.antik_done)
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add scripts/.antik_done || true
+          git commit -m "antik: sidumise edenemine [skip ci]" || echo "muudatusi pole"
+          git push || echo "push ebaõnnestus"
